@@ -2,10 +2,6 @@
   "name": "admin",
   "version": "0.1.0",
   "private": true,
-<<<<<<< HEAD
-=======
-
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -22,11 +18,9 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.2.0",
     "react-scripts": "5.0.1",
-<<<<<<< HEAD
+
     "recharts": "^2.15.4",
-=======
-    "recharts": "^2.15.1",
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
+
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -53,8 +47,4 @@
       "last 1 safari version"
     ]
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
