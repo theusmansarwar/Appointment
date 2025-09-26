@@ -1,7 +1,11 @@
 import { invokeApi } from "../Utils/InvokeApi";
 
 
+<<<<<<< HEAD
 export const deleteAllCategories = async (ids) => {
+=======
+export const deleteAllCategories = async (data) => {
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
   const reqObj = {
     path: ``,
     method: "DELETE", // Ensure correct capitalization
@@ -9,6 +13,7 @@ export const deleteAllCategories = async (ids) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("Token")}`,
     },
+<<<<<<< HEAD
     postData: {ids},
   };
   
@@ -78,4 +83,10 @@ export const deleteAppointment = async (data) => {
   };
 
   return invokeApi(reqObj);
+=======
+    postData: data,
+  };
+  
+  return invokeApi(reqObj);
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
 };

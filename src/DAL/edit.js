@@ -11,6 +11,7 @@ export const updateCategory = async (id,data) => {
   };
   return invokeApi(reqObj);
 };
+<<<<<<< HEAD
 export const updatePatient = async (id,data) => {
  
   const reqObj = {
@@ -51,3 +52,5 @@ export const updateAppointment = async (id,data) => {
   };
   return invokeApi(reqObj);
 };
+=======
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c

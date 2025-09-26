@@ -50,6 +50,7 @@ export const fetchallcategorylist = async (page, rowsPerPages) => {
   };
   return invokeApi(reqObj);
 };
+<<<<<<< HEAD
 export const fetchPatients = async (page, rowsPerPages) => {
   const reqObj = {
     path: `/patients/all?limit=${rowsPerPages}&page=${page}`,
@@ -98,3 +99,5 @@ export const fetchAppointment = async (page, rowsPerPages) => {
   };
   return invokeApi(reqObj);
 };
+=======
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+<<<<<<< HEAD
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './login.css';
@@ -15,6 +16,21 @@ const Login = ({ onLoginSuccess }) => {
     const savedPassword = localStorage.getItem("password");
     if (savedUsername && savedPassword) {
       setUsername(savedUsername);
+=======
+
+import { login } from "../DAL/auth";
+import './login.css'
+const Login = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("email");
+    const savedPassword = localStorage.getItem("password");
+    if (savedEmail && savedPassword) {
+      setEmail(savedEmail);
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
       setPassword(savedPassword);
     }
   }, []);
@@ -23,6 +39,7 @@ const Login = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
 
+<<<<<<< HEAD
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", {
         username,
@@ -42,6 +59,47 @@ if (res.data.role === "admin") {
       setError(err.response?.data?.error || "Login failed");
     }
   };
+=======
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("password", password);
+
+    try {
+      const result = await login(formData);
+
+      if (result.status == 200) {
+        alert("Login Successful: " + result?.message);
+        localStorage.setItem("Token", result?.token);
+        onLoginSuccess();
+      } else {
+        // Login failed, show the error message from the server
+        alert("Login failed: " + result?.message);
+      }
+    } catch (error) {
+      if (error.response) {
+        // The server responded with a status code out of the 2xx range
+        console.log("<=== Api-Error ===>", error.response.data);
+        alert(
+          "Login failed: " + error.response.data.message || "An error occurred."
+        );
+      } else if (error.request) {
+        // The request was made, but no response was received
+        console.log(
+          "<=== Api-Request-Error ===> No response received:",
+          error.request
+        );
+        alert("Login failed: No response from the server.");
+      } else {
+        // Something else went wrong in setting up the request
+        console.log("<=== Api-Unknown-Error ===>", error.message);
+        alert("Login failed: " + error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
   return (
     <div className="login">
       {loading && (
@@ -52,6 +110,7 @@ if (res.data.role === "admin") {
       <div className="form-area">
         <form onSubmit={handleLogin}>
           <h3>Admin Login</h3>
+<<<<<<< HEAD
           {error && <p style={{ color: "red" }}>{error}</p>}
           <div className="mb-3">
             <label className="form-label">User Name</label>
@@ -67,6 +126,30 @@ if (res.data.role === "admin") {
             <input
               type="password"
               className="form-control"
+=======
+          <div className="mb-3">
+            <label htmlFor="exampleInputEmail1" className="form-label">
+              Email address
+            </label>
+            <input
+              type="email"
+              className="form-control"
+              id="exampleInputEmail1"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              aria-describedby="emailHelp"
+              variant="outlined"
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="exampleInputPassword1" className="form-label">
+              Password
+            </label>
+            <input
+              type="password"
+              className="form-control"
+              id="exampleInputPassword1"
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -80,6 +163,7 @@ if (res.data.role === "admin") {
   );
 };
 
+<<<<<<< HEAD
 export default Login;
 
 // import React, { useState, useEffect } from "react";
@@ -401,3 +485,6 @@ export default Login;
 // };
 
 // export default Login;
+=======
+export default Login;
+>>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
