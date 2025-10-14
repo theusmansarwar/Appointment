@@ -11,7 +11,7 @@ import {
   } from "@mui/material";
 import { updateAppointment } from "../../DAL/edit";
 import { createAppointment } from "../../DAL/create";
-
+import { formatDate } from "../../Utils/Formatedate";
 const style = {
   position: "absolute",
   top: "50%",
@@ -36,11 +36,8 @@ export default function AddAppointment({ open, setOpen, Modeltype, Modeldata, on
   useEffect(() => {
     if (Modeldata) {
       setPatientName(Modeldata.patientName || "");
-       setAppointmentDate(
-      Modeldata.appointmentDate
-        ? new Date(Modeldata.appointmentDate).toISOString().split("T")[0]
-        : ""
-    );
+       setAppointmentDate(formatDate
+      (Modeldata.appointmentDate , "form"));
       setAppointmentTime(Modeldata.appointmentTime || "");
       setStatus(Modeldata.status || "Pending");
       setReason(Modeldata.reason || "");
@@ -160,7 +157,7 @@ export default function AddAppointment({ open, setOpen, Modeltype, Modeldata, on
           <Button onClick={handleClose} sx={{ background: "#B1B1B1" }} variant="contained">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} variant="contained" sx={{ background: "var(--primary-color)" }}>
+          <Button onClick={handleSubmit} variant="contained" sx={{ background: "#B22222" }}>
             Submit
           </Button>
         </Box>

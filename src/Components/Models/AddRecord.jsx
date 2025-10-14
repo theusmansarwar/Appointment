@@ -10,6 +10,7 @@ import {
 import axios from "axios"; // ✅ add axios
 import { updateRecord } from "../../DAL/edit";
 import { createRecord } from "../../DAL/create";
+import { formatDate } from "../../Utils/Formatedate";
 
 const style = {
   position: "absolute",
@@ -38,14 +39,16 @@ export default function AddRecord({
   const [dues, setDues] = useState("");
 
   useEffect(() => {
+    console.log("incomig model data",Modeldata)
     if (Modeldata) {
       setPatientName(Modeldata.patientName || "");
-       setAppointmentDate(
-      Modeldata.appointmentDate
-        ? new Date(Modeldata.appointmentDate).toISOString().split("T")[0]
-        : ""
-    );
-      // setAppointmentDate(Modeldata.appointmentDate || "");
+    //    setAppointmentDate(
+    //   Modeldata.appointmentDate
+    //     ? new Date(Modeldata.appointmentDate).toISOString().split("T")[0]
+    //     : ""
+    // );
+setAppointmentDate(formatDate(Modeldata.appointmentDate, "form"));
+
       setAppointmentTime(Modeldata.appointmentTime || "");
       setReason(Modeldata.reason || "");
       setPrescription(Modeldata.prescription || "");
@@ -67,20 +70,6 @@ export default function AddRecord({
     e.preventDefault();
     try{
 
-    // if (!patientName || !appointmentDate) {
-    //   onResponse({
-    //     messageType: "error",
-    //     message: "Patient name and appointment date are required",
-    //   });
-    //   return;
-    // }
-// if (!appointmentDate) {
-//   onResponse({
-//     messageType: "error",
-//     message: "Please pick an appointment date",
-//   });
-//   return;
-// }
     const payload = {
       patientName,
       appointmentDate: appointmentDate ? new Date(appointmentDate) : null,
@@ -110,16 +99,17 @@ export default function AddRecord({
              message: res?.message || "Record added",
              data: res?.data || payload,
            });
-         } else {
-           // 🔹 Call DAL updatePatient (pass id from Modeldata)
-           const res = await updateRecord(Modeldata._id, payload);
+          }
+        //  } else {
+        //    // 🔹 Call DAL updatePatient (pass id from Modeldata)
+        //    const res = await updateRecord(Modeldata._id, payload);
    
-           onResponse({
-             messageType: "success",
-             message: res?.message || "Record updated",
-             data: res?.data || payload,
-           });
-         }
+        //    onResponse({
+        //      messageType: "success",
+        //      message: res?.message || "Record updated",
+        //      data: res?.data || payload,
+        //    });
+        //  }
          setOpen(false);
        } catch (err) {
          console.error(err);
@@ -202,7 +192,7 @@ export default function AddRecord({
             type="submit"
             
             variant="contained"
-            sx={{ background: "var(--primary-color)" }}
+            sx={{ background: "#B22222" }}
           >
             Submit
           </Button>

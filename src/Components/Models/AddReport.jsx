@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { createReport } from "../../DAL/create";
 import { updateReport } from "../../DAL/edit";
-
+import { formatDate } from "../../Utils/Formatedate";
 const style = {
   position: "absolute",
   top: "50%",
@@ -40,12 +40,13 @@ export default function AddReport({
 
   useEffect(() => {
     if (Modeldata) {
-      // setReportDate(Modeldata.reportDate || "");
-       setReportDate(
-      Modeldata.reportDate
-        ? new Date(Modeldata.reportDate).toISOString().split("T")[0]
-        : ""
-    );
+       setReportDate(formatDate(Modeldata.reportDate , "form"));
+    //    setReportDate(
+    //   Modeldata.reportDate
+    //     ? new Date(Modeldata.reportDate).toISOString().split("T")[0]
+    //     : ""
+    // );
+   
       setTotalAppointments(Modeldata.totalAppointments || "");
       setPatientsSeen(Modeldata.patientsSeen || "");
       setCancelled(Modeldata.cancelled || "");
@@ -191,7 +192,7 @@ export default function AddReport({
           <Button
             onClick={handleSubmit}
             variant="contained"
-            sx={{ background: "var(--primary-color)" }}
+            sx={{ background: "#B22222" }}
           >
             Submit
           </Button>

@@ -1,11 +1,9 @@
+
+
 import { invokeApi } from "../Utils/InvokeApi";
 
-
-<<<<<<< HEAD
-export const deleteAllCategories = async (ids) => {
-=======
+// Delete all categories
 export const deleteAllCategories = async (data) => {
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
   const reqObj = {
     path: ``,
     method: "DELETE", // Ensure correct capitalization
@@ -13,80 +11,78 @@ export const deleteAllCategories = async (data) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("Token")}`,
     },
-<<<<<<< HEAD
-    postData: {ids},
+    postData: data, // data should be { ids: [...] }
   };
-  
+
   return invokeApi(reqObj);
 };
-// export const deleteRecord = async (ids) => {
-//   const reqObj = {
-//     path: `/patients/delete`,
-//     method: "DELETE", // Ensure correct capitalization
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${localStorage.getItem("Token")}`,
-//     },
-//     postData: {ids},
-//   };
-  
-//   return invokeApi(reqObj);
-// };
+
+// Delete patient
 export const deletePatient = async (data) => {
   const reqObj = {
-    path: `/patients/delete`,   // matches router.delete("/delete")
+    path: `/patients/delete`, // matches router.delete("/delete")
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("Token")}`,
     },
-    postData: data,             // data should be { ids: [...] }
+    postData: data, // data should be { ids: [...] }
   };
 
   return invokeApi(reqObj);
 };
+
+// Delete record
 export const deleteRecord = async (data) => {
   const reqObj = {
-    path: `/record/delete`,   // matches router.delete("/delete")
+    path: `/record/delete`, // matches router.delete("/delete")
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("Token")}`,
     },
-    postData: data,             // data should be { ids: [...] }
+    postData: data, // data should be { ids: [...] }
   };
 
   return invokeApi(reqObj);
 };
+
+// Delete report
 export const deleteReport = async (data) => {
   const reqObj = {
-    path: `/report/delete`,   // matches router.delete("/delete")
+    path: `/report/delete`, // matches router.delete("/delete")
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("Token")}`,
     },
-    postData: data,             // data should be { ids: [...] }
+    postData: data, // data should be { ids: [...] }
   };
 
   return invokeApi(reqObj);
 };
+
+// Delete appointment
 export const deleteAppointment = async (data) => {
   const reqObj = {
-    path: `/appointment/delete`,   // matches router.delete("/delete")
+    path: `/appointment/delete`, // matches router.delete("/delete")
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("Token")}`,
     },
-    postData: data,             // data should be { ids: [...] }
+    postData: data, // data should be { ids: [...] }
   };
 
   return invokeApi(reqObj);
-=======
-    postData: data,
+};
+export const deleteRecordVisit = async (recordId, visitId) => {
+  const reqObj = {
+    path: `/records/${recordId}/visits/${visitId}`,
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("Token")}`,
+    },
   };
-  
   return invokeApi(reqObj);
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
 };

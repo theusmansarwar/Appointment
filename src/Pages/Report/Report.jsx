@@ -1,5 +1,6 @@
 import React from "react";
 import { useTable } from "../../Components/Models/useTable";
+import { formatDate } from "../../Utils/Formatedate";
 // dailyReports.js
 const Report = () => {
 

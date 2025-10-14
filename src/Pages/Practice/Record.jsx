@@ -1,6 +1,3 @@
-
-
-
 import { useTable } from "../../Components/Models/useTable";
 
 const Record = () => {

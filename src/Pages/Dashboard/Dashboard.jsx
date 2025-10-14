@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { HiMiniUsers } from "react-icons/hi2";
-import { FaBook, FaRegEye, FaRegUser } from "react-icons/fa6";
+import {  FaRegEye, FaRegUser } from "react-icons/fa6";
 import { IoMdStats } from "react-icons/io";
 import { MdOutlineArticle, MdOutlineInsertComment } from "react-icons/md";
 

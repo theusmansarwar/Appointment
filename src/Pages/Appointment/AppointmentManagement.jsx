@@ -13,7 +13,7 @@ const AppointmentManagement = () => {
   ];
 
   
-  const { tableUI } = useTable({  attributes, tableType: "AppointmentManagement" });
+  const { tableUI } = useTable({  attributes, tableType: "Appointment" });
 
   return <>{tableUI}</>;
 };

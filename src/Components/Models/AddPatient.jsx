@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -10,6 +9,7 @@ import {
 } from "@mui/material";
 import {  updatePatient } from "../../DAL/edit"; // 🔹 Import here
 import { createPatient } from "../../DAL/create";
+import { formatDate } from "../../Utils/Formatedate";
 const style = {
   position: "absolute",
   top: "50%",
@@ -34,8 +34,8 @@ export default function AddPatient({
   const [gender, setGender] = useState("Male");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [date, setAppointmentDate] = useState("");
-  const [time, setAppointmentTime] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentTime, setAppointmentTime] = useState("");
   const [reason, setReason] = useState("");
 
   useEffect(() => {
@@ -45,9 +45,9 @@ export default function AddPatient({
       setGender(Modeldata.gender || "Male");
       setPhone(Modeldata.phone || "");
       setAddress(Modeldata.address || "");
-       setAppointmentDate(
-      Modeldata.appointmentDate|| "" );
-      setAppointmentTime(Modeldata.time || "");
+       setAppointmentDate(formatDate(
+      Modeldata.appointmentDate,  "form" ));
+      setAppointmentTime(Modeldata.appointmentTime || "");
       setReason(Modeldata.reason || "");
     } else {
       // Reset if Add
@@ -72,8 +72,8 @@ export default function AddPatient({
       gender,
       phone,
       address,
-      date,
-      time,
+     appointmentDate: appointmentDate ? new Date(appointmentDate) : null,
+      appointmentTime,
       reason,
     };
 
@@ -169,18 +169,18 @@ export default function AddPatient({
         <TextField
           fullWidth
           type="date"
-          label="Date"
+          label="Appointment Date"
           InputLabelProps={{ shrink: true }}
-          value={date}
+          value={appointmentDate}
           onChange={(e) => setAppointmentDate(e.target.value)}
           sx={{ mb: 2 }}
         />
         <TextField
           fullWidth
           type="time"
-          label="Time"
+          label="Appointment Time"
           InputLabelProps={{ shrink: true }}
-          value={time}
+          value={appointmentTime}
           onChange={(e) => setAppointmentTime(e.target.value)}
           sx={{ mb: 2 }}
         />
@@ -204,7 +204,7 @@ export default function AddPatient({
           <Button
             type="submit"
             variant="contained"
-            sx={{ background: "var(--primary-color)" }}
+            sx={{ background: "#B22222" }}
           >
             Submit
           </Button>

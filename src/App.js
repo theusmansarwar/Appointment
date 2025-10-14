@@ -1,123 +1,171 @@
+
 import React, { useState, useEffect, useMemo } from "react";
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
 import "./App.css";
-import zemaltlogo from "./Assets/zemalt-logo.png";
+import zemaltlogo from "./Assets/doctor.jpg";
 import personimg from "./Assets/person.png";
 
-import Categories from "./Pages/Categories/Categories";
-<<<<<<< HEAD
+// icons
+import { MdOutlineDoubleArrow, MdDashboard } from "react-icons/md";
+import { FaCalendarCheck, FaUserInjured, FaNotesMedical } from "react-icons/fa";
+import { HiDocumentReport } from "react-icons/hi";
+import { IoLogOut } from "react-icons/io5";
+
+import ProtectedRoute from "./Components/ProtectedRoute";
 import Record from "./Pages/Practice/Record";
 import PatientData from "./Pages/PatientData/PatientData";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import AppointmentManagement from "./Pages/Appointment/AppointmentManagement";
 import Report from "./Pages/Report/Report";
-=======
+import RecordDetailPage from "./Components/Models/RecordDetailPage";
 
-import Dashboard from "./Pages/Dashboard/Dashboard";
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
-
-const App = ({ onLogout, message }) => {
+const App = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeitems, setActiveitems] = useState(null);
 
-<<<<<<< HEAD
-  // get role from localStorage
+  const [activeItem, setActiveItem] = useState(null);
+  const [isOpen, setIsOpen] = useState(true);
+
   const role = localStorage.getItem("role"); // "admin" or "doctor"
 
-  // Sidebar items allowed by role (you can keep filtering by role if you want)
-  const items = useMemo(() => {
-    return [
-      { id: 1, name: "Dashboard", route: "/dashboard" },
-      { id: 2, name: "Categories", route: "/categories" },
-      { id: 3, name: "Record", route: "/record" },
-      { id: 4, name: "AppointmentManagement", route: "/appointmentmanagement" },
-      { id: 5, name: "PatientData", route: "/patientdata" },
-      { id: 6, name: "Report", route: "/report" },
-    ];
-  }, []);
-=======
-  const items = useMemo(
-    () => [
-      { id: 1, name: "Dashboard", route: "/dashboard" },
-      
-      { id: 2, name: "Categories", route: "/categories" },
-      
-    
+  // Define which routes each role can access
+  const rolePermissions = {
+    admin: [
+      "/dashboard",
+      "/appointmentmanagement",
+      "/patientdata",
+      "/record",
+      "/report",
     ],
-    []
-  );
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
+    doctor: ["/dashboard", "/appointmentmanagement", "/patientdata", "/record"],
+  };
 
+  // Sidebar items
+  const items = useMemo(() => {
+    const allItems = [
+      { id: 1, name: "Dashboard", route: "/dashboard", icon: <MdDashboard /> },
+      {
+        id: 2,
+        name: "Appointments",
+        route: "/appointmentmanagement",
+        icon: <FaCalendarCheck />,
+      },
+      {
+        id: 3,
+        name: "Patients Data",
+        route: "/patientdata",
+        icon: <FaUserInjured />,
+      },
+      { id: 4, name: "Records", route: "/record", icon: <FaNotesMedical /> },
+      { id: 5, name: "Reports", route: "/report", icon: <HiDocumentReport /> },
+    ];
+    const allowedRoutes = rolePermissions[role] || [];
+    return allItems.filter((item) => allowedRoutes.includes(item.route));
+  }, [role]);
+
+  // Set active item based on current URL
   useEffect(() => {
     const currentItem = items.find((item) => item.route === location.pathname);
-    setActiveitems(currentItem?.id || null);
+    setActiveItem(currentItem?.id || null);
   }, [location, items]);
 
-  const handleitemsClick = (item) => {
-    setActiveitems(item.id);
+  // Sidebar toggle
+  const toggleMenu = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  // Handle click navigation
+  const handleItemClick = (item) => {
+    setActiveItem(item.id);
     navigate(item.route);
   };
 
   return (
     <div className="App">
-      <div className="app-side-bar">
-        <img src={zemaltlogo} className="home-zemalt-logo" alt="zemalt Logo" />
-        <div className="userprofile">
-          <div
-            className="avatar"
-            style={{
-              backgroundImage: `url(${personimg})`,
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "cover",
-            }}
-          ></div>
-          <div className="avatar-data">
-            <p>Profile</p>
-<<<<<<< HEAD
-            <h4>{role ? role.charAt(0).toUpperCase() + role.slice(1) : "User"}</h4>
-=======
-            <h4>Admin</h4>
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
-          </div>
+      {/* Sidebar */}
+      <div className={`app-side-bar ${isOpen ? "open" : "closed"}`}>
+        {/* Toggle icon */}
+        <div className="opencloseicon" onClick={toggleMenu}>
+          <MdOutlineDoubleArrow className={isOpen ? "rotated" : ""} />
         </div>
+
+        {/* Logo */}
+        <img src={zemaltlogo} className="logo" alt="Clinic Logo" />
+
+       
+
+        {/* Menu Items */}
         <ul>
           {items.map((item) => (
             <li
               key={item.id}
-              className={activeitems === item.id ? "selected-item" : "unselected"}
-              onClick={() => handleitemsClick(item)}
+              className={activeItem === item.id ? "selected-item" : "unselected"}
+              onClick={() => handleItemClick(item)}
             >
-              {item.name}
+              {item.icon}
+              {isOpen && <span>{item.name}</span>}
             </li>
           ))}
           <li className="unselected" onClick={onLogout}>
-            Logout
+            <IoLogOut />
+            {isOpen && <span>Logout</span>}
           </li>
         </ul>
       </div>
+
+      {/* Right Content */}
       <div className="app-right">
-<<<<<<< HEAD
         <Routes>
-          <Route path="/dashboard" element={<Dashboard key="dashboard" />} />
-          <Route path="/categories" element={<Categories key="categories" />} />
-          <Route path="/record" element={<Record key="record" />} />
-          <Route path="/appointmentmanagement" element={<AppointmentManagement key="appointment" />} />
-          <Route path="/patientdata" element={<PatientData key="patient" />} />
-          <Route path="/report" element={<Report key="report" />} />
-        </Routes>
-=======
-      
-          <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/categories" element={<Categories />} />
-      
-           
-           
-          </Routes>
-    
->>>>>>> 109c5ad261df44b694cde745048932f8fe2fed6c
+          <Route
+            path="/appointmentmanagement"
+            element={
+              <ProtectedRoute
+                element={<AppointmentManagement />}
+                allowedRoles={["admin", "doctor"]}
+                role={role}
+              />
+            }
+          />
+          <Route
+            path="/record"
+            element={
+              <ProtectedRoute
+                element={<Record />}
+                allowedRoles={["admin", "doctor"]}
+                role={role}
+              />
+            }
+          />
+          <Route path="/record/:recordId" element={<RecordDetailPage />} />
+          <Route
+            path="/patientdata"
+            element={
+              <ProtectedRoute
+                element={<PatientData />}
+                allowedRoles={["admin", "doctor"]}
+                role={role}
+              />
+            }
+          />
+          <Route
+            path="/report"
+            element={
+              <ProtectedRoute
+                element={<Report />}
+                allowedRoles={["admin"]}
+                role={role}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/dashboard" />} />
+        </Routes>
       </div>
     </div>
   );

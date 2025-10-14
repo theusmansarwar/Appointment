@@ -50,10 +50,10 @@ export default function AddCategories({ open, setOpen, Modeltype, Modeldata,onRe
     }else{
         response =await updateCategory(id,categoryData); 
     }
-    if(response.status==201){
+    if(response.status===201){
         onResponse({ messageType: "success", message: response.message });
     }
-    else if(response.status==200){
+    else if(response.status===200){
         onResponse({ messageType: "success", message: response.message });
     }
   else{
