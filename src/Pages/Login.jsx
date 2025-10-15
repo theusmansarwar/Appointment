@@ -96,7 +96,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Button, TextField, Typography, Paper, CircularProgress } from "@mui/material";
 import { login } from "../DAL/auth";
-import logo from "../Assets/bg2.jpg";
+import logo from "../Assets/doctor.jpg";
 import './login.css'
 import { useAlert } from "../Components/Alert/AlertContext";
 import axios from "axios";
@@ -152,30 +152,29 @@ const Login = ({ onLoginSuccess }) => {
 const handleLogin = async (e) => {
   e.preventDefault();
   setLoading(true);
+  const formData = new FormData();
+  formData.append("username", username);
+  formData.append("password", password);
 
   try {
-    const result = await axios.post(
-      "http://192.168.0.106:5000/api/auth/login",
-      { username, password },
-      { headers: { "Content-Type": "application/json" } }
-    );
+      const result = await login(formData);
 
-     localStorage.setItem("token", result.data.token);
-      localStorage.setItem("role", result.data.role);
-    console.log("Response:", result.data);
+     localStorage.setItem("token", result.token);
+      localStorage.setItem("role", result.role);
+    console.log("Response:", result);
 
-    if (result.status === 200 && result.data?.token) {
-      showAlert("success", result.data?.message || "Login successful!");
-      localStorage.setItem("token", result.data.token);
-      localStorage.setItem("user", JSON.stringify(result.data.user || {}));
+    if (result.status === 200 && result?.token) {
+      showAlert("success", result?.message || "Login successful!");
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("user", JSON.stringify(result.user || {}));
       onLoginSuccess();
     } else {
-      showAlert("error", result.data?.message || "Login failed.");
+      showAlert("error", result?.message || "Login failed.");
     }
   } catch (error) {
     console.error(error);
     if (error.response) {
-      showAlert("error", error.response.data.message || "An error occurred.");
+      showAlert("error", error.response.message || "An error occurred.");
     } else if (error.request) {
       showAlert("error", "No response from the server.");
     } else {
