@@ -86,3 +86,27 @@ export const deleteRecordVisit = async (recordId, visitId) => {
   };
   return invokeApi(reqObj);
 };
+export const deleteAllUsers = async (data) => {
+  const reqObj = {
+    path: `/user/multipleDelete`,
+    method: "DELETE", // Ensure correct capitalization
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("Token")}`,
+    },
+    postData: data,
+  };
+  return invokeApi(reqObj);
+};
+export const deleteAllRoles = async (data) => {
+  const reqObj = {
+    path: `/roles/multipleDelete`,
+    method: "DELETE", // Ensure correct capitalization
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("Token")}`,
+    },
+    postData: data,
+  };
+  return invokeApi(reqObj);
+};

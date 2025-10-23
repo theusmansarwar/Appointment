@@ -8,7 +8,7 @@ import {
   Button,
 } from "@mui/material";
 import axios from "axios"; // ✅ add axios
-import { updateRecord } from "../../DAL/edit";
+
 import { createRecord } from "../../DAL/create";
 import { formatDate } from "../../Utils/Formatedate";
 

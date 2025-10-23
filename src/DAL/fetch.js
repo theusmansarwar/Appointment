@@ -141,6 +141,45 @@ export const fetchRecordById = async (recordId) => {
   };
   return invokeApi(reqObj);
 };
+export const fetchallRoleslist = async (page, rowsPerPages,searchQuery) => {
+  const reqObj = {
+    path: `/roles/list?limit=${rowsPerPages}&page=${page}&keyword=${searchQuery}`,
+    method: "GET",
+    headers: {
+       Authorization: `Bearer ${localStorage.getItem("Token")}`,
+    },
+    postData: {},
+  };
+  return invokeApi(reqObj);
+};
+export const fetchallActiveroleslist = async (page, rowsPerPages,searchQuery) => {
+  const reqObj = {
+    path: `/roles/activeList?limit=${rowsPerPages}&page=${page}&keyword=${searchQuery}`,
+    method: "GET",
+    headers: {
+       Authorization: `Bearer ${localStorage.getItem("Token")}`,
+    },
+    postData: {},
+  };
+  return invokeApi(reqObj);
+};
+export const fetchallUserlist = async (page, rowsPerPages,searchQuery) => {
+  const reqObj = {
+    path: `/user/list?limit=${rowsPerPages}&page=${page}&keyword=${searchQuery}`,
+    method: "GET",
+    headers: {
+       Authorization: `Bearer ${localStorage.getItem("Token")}`,
+    },
+    postData: {},
+  };
+  return invokeApi(reqObj);
+};
+
+
+
+
+
+
 
 
 // export const fetchallPatientslist = async (page, rowsPerPages, search = "") => {

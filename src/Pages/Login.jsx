@@ -160,7 +160,7 @@ const handleLogin = async (e) => {
       const result = await login(formData);
 
      localStorage.setItem("token", result.token);
-      localStorage.setItem("role", result.role);
+      // localStorage.setItem("role", result.role);
     console.log("Response:", result);
 
     if (result.status === 200 && result?.token) {

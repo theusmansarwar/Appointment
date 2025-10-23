@@ -22,7 +22,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import {
   fetchallcategorylist,
-  
+  fetchallRoleslist,
+  fetchallUserlist,
   fetchallPatientslist,
   fetchallReportlist,
   fetchallRecordlist,
@@ -35,6 +36,8 @@ import {
   deleteReport,
   deleteAppointment,
   deleteRecord,
+  deleteAllUsers,
+  deleteAllRoles
 } from "../../DAL/delete";
 
 import { formatDate } from "../../Utils/Formatedate";
@@ -47,8 +50,8 @@ import AddAppointment from "./Addappointment";
 import AddRecord from "./AddRecord";
 import { useAlert } from "../Alert/AlertContext";
 import DeleteModal from "./confirmDeleteModel";
-import RecordDetailPage from "./RecordDetailPage";
-
+import AddRoles from "./AddRoles";
+import AddUser from "./AddUser";
 export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 10 }) {
   const { showAlert } = useAlert();
   const savedState =
@@ -76,6 +79,12 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
 
   const [openRecordModal, setOpenRecordModal] = useState(false);
   const [recordModelType, setRecordModelType] = useState("Add");
+
+  const [openUserModal, setOpenUserModal] = useState(false);
+  const [userModelType, setUserModelType] = useState("Add");
+
+const [openRolesModal, setOpenRolesModal] = useState(false);
+  const [rolesModelType, setRolesModelType] = useState("Add");
 
   const [modelData, setModelData] = useState({});
   const [data, setData] = useState([]);
@@ -170,6 +179,34 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
         setTotalRecords(response?.total ?? records.length);
         return;
       }
+ if (tableType === "User") {
+        response = await fetchallUserlist(page, rowsPerPage, searchQuery);
+
+        if (response?.status === 400) {
+          localStorage.removeItem("Token");
+          navigate("/login");
+          return;
+        }
+
+        const user = ensureArray(response?.user || response?.users || response?.data);
+        setData(user);
+        setTotalRecords(response?.total ?? user.length);
+        return;
+      }
+ if (tableType === "Roles") {
+        response = await fetchallRoleslist(page, rowsPerPage, searchQuery);
+
+        if (response?.status === 400) {
+          localStorage.removeItem("Token");
+          navigate("/login");
+          return;
+        }
+
+        const roles = ensureArray(response?.role || response?.roles || response?.data);
+        setData(roles);
+        setTotalRecords(response?.total ?? roles.length);
+        return;
+      }
  
       // AppointmentManagement
       if (tableType === "Appointment") {
@@ -212,31 +249,6 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
     setPage(1); // reset to first page
   };
 
-  // const handleViewClick = (row) => {
-  //   setModelData(row || {});
-  //   // open the appropriate modal depending on tableType
-  //   if (tableType === "Categories") {
-  //     setCategoryModelType("Update");
-  //     setOpenCategoryModal(true);
-  //   // } else if (tableType === "Record") {
-  //   //   // setRecordModelType("Update");
-  //   //   // setOpenRecordModal(true);
-  //   //   navigate(`/records/${row._id}`, { state: row });
-  //   } if (tableType === "Record") {
-  //   navigate(`/records/${row._id}`, { state: row }); // ✅ go to record page
-  // } else  {
-  //   setModelData(row || {});
-  //   } else if (tableType === "Appointment") {
-  //     setAppointmentModelType("Update");
-  //     setOpenAppointmentModal(true);
-  //   } else if (tableType === "PatientData") {
-  //     setPatientModelType("Update");
-  //     setOpenPatientModal(true);
-  //   } else if (tableType === "Report") {
-  //     setReportModelType("Update");
-  //     setOpenReportModal(true);
-  //   }
-  // };
   const handleViewClick = (row) => {
   if (tableType === "Categories") {
     setModelData(row || {});
@@ -257,6 +269,16 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
     setModelData(row || {});
     setReportModelType("Update");
     setOpenReportModal(true);
+  } 
+   else if (tableType === "User") {
+    setModelData(row || {});
+    setUserModelType("Update");
+    setOpenUserModal(true);
+  } 
+   else if (tableType === "Roles") {
+    setModelData(row || {});
+    setRolesModelType("Update");
+    setOpenRolesModal(true);
   } 
   // else if (tableType === "RecordDetailPage") {
   //   setModelData(row || {});
@@ -293,7 +315,13 @@ const handleSearch = (value) => {
         response = await deleteRecord({ ids: selected });
       } else if (tableType === "Appointment") {
         response = await deleteAppointment({ ids: selected });
-      } else {
+      } 
+      else if (tableType === "Roles") {
+        response = await deleteAllRoles({ ids: selected });
+      }
+      else if (tableType === "User") {
+        response = await deleteAllUsers({ ids: selected });
+      }else {
         showAlert("error", "Delete not supported for this table");
         return;
       }
@@ -330,6 +358,14 @@ const handleSearch = (value) => {
     } else if (tableType === "Report") {
       setReportModelType("Add");
       setOpenReportModal(true);
+    }
+    else if (tableType === "User") {
+      setUserModelType("Add");
+      setOpenUserModal(true);
+    }
+    else if (tableType === "Roles") {
+      setRolesModelType("Add");
+      setOpenRolesModal(true);
     }
   };
 
@@ -386,6 +422,20 @@ const handleSearch = (value) => {
           open={openReportModal}
           setOpen={setOpenReportModal}
           Modeltype={reportModelType}
+          Modeldata={modelData}
+          onResponse={handleResponse}
+        />
+        <AddUser
+          open={openUserModal}
+          setOpen={setOpenUserModal}
+          Modeltype={userModelType}
+          Modeldata={modelData}
+          onResponse={handleResponse}
+        />
+        <AddRoles
+          open={openRolesModal}
+          setOpen={setOpenRolesModal}
+          Modeltype={rolesModelType}
           Modeldata={modelData}
           onResponse={handleResponse}
         />
@@ -550,6 +600,78 @@ const handleSearch = (value) => {
                   }}
                 />
               )}
+              {tableType === "Roles" && (
+                <TextField
+                  size="small"
+                  placeholder="Search..."
+                  variant="outlined"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{
+                    minWidth: 200,
+                    backgroundColor: "white",
+                    borderRadius: 1,
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": { borderColor: "var(--background-color)" },
+                      "&:hover fieldset": {
+                        borderColor: "var(--background-color)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "var(--background-color)",
+                      },
+                    },
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <SearchIcon
+                          onClick={handleSearch}
+                          sx={{
+                            cursor: "pointer",
+                            color: "var(--background-color)",
+                          }}
+                        />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
+              {tableType === "User" && (
+                <TextField
+                  size="small"
+                  placeholder="Search..."
+                  variant="outlined"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{
+                    minWidth: 200,
+                    backgroundColor: "white",
+                    borderRadius: 1,
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": { borderColor: "var(--background-color)" },
+                      "&:hover fieldset": {
+                        borderColor: "var(--background-color)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "var(--background-color)",
+                      },
+                    },
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <SearchIcon
+                          onClick={handleSearch}
+                          sx={{
+                            cursor: "pointer",
+                            color: "var(--background-color)",
+                          }}
+                        />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
               {tableType === "PatientData" && (
                 <TextField
                   size="small"
@@ -587,7 +709,7 @@ const handleSearch = (value) => {
                 />
               )}
               {selected.length > 0 ? (
-                <IconButton onClick={handleDeleteClick} sx={{ color: "red" }}>
+                <IconButton onClick={handleDeleteClick} sx={{ color:"rgb(161, 4, 4)" }}>
                   <DeleteIcon />
                 </IconButton>
               ) : (
@@ -624,7 +746,7 @@ const handleSearch = (value) => {
                         {attr.label}
                       </TableCell>
                     ))}
-                    <TableCell sx={{ color: "#B22222" }}>Action</TableCell>
+                    <TableCell sx={{ color: "#B0000" }}>Action</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -646,7 +768,7 @@ const handleSearch = (value) => {
                           />
                         </TableCell>
 
-                        {attributes.map((attr) => (
+                        {/* {attributes.map((attr) => (
                           <TableCell key={attr.id} sx={{ color: "var(--black-color)" }}>
                             {attr.id === "createdAt" || attr.id === "publishedDate"|| attr.id === "reportDate" || attr.id === "appointmentDate"  ? (
                 
@@ -671,6 +793,64 @@ const handleSearch = (value) => {
                             )}
                           </TableCell>
                         ))} 
+ */}{attributes.map((attr) => (
+  <TableCell key={attr.id} sx={{ color: "var(--black-color)" }}>
+    {["createdAt", "publishedDate", "reportDate", "appointmentDate"].includes(attr.id) ? (
+      formatDate(row[attr.id], "display")
+
+    ) : attr.id === "published" ? (
+      <span
+        style={{
+          color: row[attr.id] ? "var(--success-color)" : "var(--warning-color)",
+          background: row[attr.id] ? "var(--success-bgcolor)" : "var(--warning-bgcolor)",
+          padding: "5px 10px",
+          borderRadius: "4px",
+          fontWeight: 500,
+        }}
+      >
+        {row[attr.id] ? "Public" : "Private"}
+      </span>
+
+//   
+) : attr.id === "status" ? (
+  <span
+    style={{
+      backgroundColor:
+        row[attr.id] === true || row[attr.id] === "Active"
+          ? "rgb(210, 248, 172)" // 🟢 light parrot green
+          : row[attr.id] === false || row[attr.id] === "Inactive"
+          ? "rgb(255, 206, 202)" // 🔴 light red
+          : row[attr.id] === "Completed"
+          ? "rgb(210, 248, 172)"
+          : row[attr.id] === "Cancelled"
+          ? "rgb(255, 206, 202)"
+          : row[attr.id] === "Approved"
+          ? "rgb(218, 237, 253)"
+          : row[attr.id] === "Pending"
+          ? "rgb(250, 227, 187)"
+          : "#F5F5F5",
+      color: "inherit",
+      padding: "6px 12px",
+      borderRadius: "6px",
+      fontWeight: 500,
+      display: "inline-block",
+      textTransform: "capitalize",
+      textAlign: "center",
+      minWidth: "80px",
+    }}
+  >
+    {row[attr.id] === true ? "Active" : row[attr.id] === false ? "Inactive" : row[attr.id]}
+  </span>
+
+    ) : row[attr.id] === 0 ? (
+      0
+    ) : typeof getNestedValue(row, attr.id) === "string" ? (
+      truncateText(getNestedValue(row, attr.id), 30)
+    ) : (
+      getNestedValue(row, attr.id)
+    )}
+  </TableCell>
+))}
 
 
                         <TableCell>
