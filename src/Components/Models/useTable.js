@@ -16,6 +16,7 @@ import {
   IconButton,
   TextField,
   InputAdornment,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -42,7 +43,7 @@ import {
 
 import { formatDate } from "../../Utils/Formatedate";
 import truncateText from "../../truncateText";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AddCategories from "./addcategorie";
 import AddPatient from "./AddPatient";
 import AddReport from "./AddReport";
@@ -52,17 +53,20 @@ import { useAlert } from "../Alert/AlertContext";
 import DeleteModal from "./confirmDeleteModel";
 import AddRoles from "./AddRoles";
 import AddUser from "./AddUser";
+
 export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 10 }) {
   const { showAlert } = useAlert();
-  const savedState =
-    JSON.parse(localStorage.getItem(`${tableType}-tableState`)) || {};
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const savedState = JSON.parse(localStorage.getItem(`${tableType}-tableState`)) || {};
 
   // pagination & UI state (page is 1-based for API)
   const [page, setPage] = useState(savedState.page || 1);
   const [rowsPerPage, setRowsPerPage] = useState(savedState.rowsPerPage || limitPerPage);
-
   const [searchQuery, setSearchQuery] = useState(savedState.searchQuery || "");
   const [selected, setSelected] = useState([]);
+  const [isLoading, setIsLoading] = useState(false); // 🆕 Loading state
 
   // modal & model state
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
@@ -83,7 +87,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
   const [openUserModal, setOpenUserModal] = useState(false);
   const [userModelType, setUserModelType] = useState("Add");
 
-const [openRolesModal, setOpenRolesModal] = useState(false);
+  const [openRolesModal, setOpenRolesModal] = useState(false);
   const [rolesModelType, setRolesModelType] = useState("Add");
 
   const [modelData, setModelData] = useState({});
@@ -92,13 +96,18 @@ const [openRolesModal, setOpenRolesModal] = useState(false);
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const navigate = useNavigate();
+  // Save current location for this table type
+  useEffect(() => {
+    localStorage.setItem(`${tableType}-lastPath`, location.pathname);
+  }, [location.pathname, tableType]);
 
+  // Fetch data when page, rowsPerPage, or searchQuery changes
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, searchQuery]);
 
+  // Save table state to localStorage
   useEffect(() => {
     localStorage.setItem(
       `${tableType}-tableState`,
@@ -112,10 +121,11 @@ const [openRolesModal, setOpenRolesModal] = useState(false);
     return [val];
   };
   
-  
   const fetchData = async () => {
+    setIsLoading(true); // 🆕 Start loading
     try {
       let response;
+      
       // Categories
       if (tableType === "Categories") {
         response = await fetchallcategorylist(page, rowsPerPage, searchQuery);
@@ -179,7 +189,9 @@ const [openRolesModal, setOpenRolesModal] = useState(false);
         setTotalRecords(response?.total ?? records.length);
         return;
       }
- if (tableType === "User") {
+
+      // User
+      if (tableType === "User") {
         response = await fetchallUserlist(page, rowsPerPage, searchQuery);
 
         if (response?.status === 400) {
@@ -193,7 +205,9 @@ const [openRolesModal, setOpenRolesModal] = useState(false);
         setTotalRecords(response?.total ?? user.length);
         return;
       }
- if (tableType === "Roles") {
+
+      // Roles
+      if (tableType === "Roles") {
         response = await fetchallRoleslist(page, rowsPerPage, searchQuery);
 
         if (response?.status === 400) {
@@ -208,7 +222,7 @@ const [openRolesModal, setOpenRolesModal] = useState(false);
         return;
       }
  
-      // AppointmentManagement
+      // Appointment
       if (tableType === "Appointment") {
         response = await fetchallAppointmentlist(page, rowsPerPage, searchQuery);
 
@@ -231,6 +245,8 @@ const [openRolesModal, setOpenRolesModal] = useState(false);
       console.error("Error fetching data:", err);
       setData([]);
       setTotalRecords(0);
+    } finally {
+      setIsLoading(false); // 🆕 Stop loading
     }
   };
 
@@ -241,61 +257,68 @@ const [openRolesModal, setOpenRolesModal] = useState(false);
   const isSelected = (id) => selected.includes(id);
 
   const handleChangePage = (_, newPage) => {
-    setPage(newPage + 1); // MUI is 0-based; our API uses 1-based
+    const newPageNumber = newPage + 1; // MUI is 0-based; our API uses 1-based
+    
+    // Don't allow going to pages that don't exist
+    const maxPage = Math.ceil(totalRecords / rowsPerPage);
+    if (newPageNumber > maxPage) {
+      return;
+    }
+    
+    setPage(newPageNumber);
+    setSelected([]); // Clear selections when changing page
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(1); // reset to first page
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
+    
+    // Calculate if current page is valid with new rows per page
+    const maxPage = Math.ceil(totalRecords / newRowsPerPage);
+    if (page > maxPage) {
+      setPage(1); // Reset to first page if current page doesn't exist anymore
+    }
+    
+    setSelected([]); // Clear selections
   };
 
   const handleViewClick = (row) => {
-  if (tableType === "Categories") {
-    setModelData(row || {});
-    setCategoryModelType("Update");
-    setOpenCategoryModal(true);
-  } else if (tableType === "Record") {
-  navigate(`/record/${row._id}`, { state: row }); // go to Past Visit page
-}
-   else if (tableType === "Appointment") {
-    setModelData(row || {});
-    setAppointmentModelType("Update");
-    setOpenAppointmentModal(true);
-  } else if (tableType === "PatientData") {
-    setModelData(row || {});
-    setPatientModelType("Update");
-    setOpenPatientModal(true);
-  } else if (tableType === "Report") {
-    setModelData(row || {});
-    setReportModelType("Update");
-    setOpenReportModal(true);
-  } 
-   else if (tableType === "User") {
-    setModelData(row || {});
-    setUserModelType("Update");
-    setOpenUserModal(true);
-  } 
-   else if (tableType === "Roles") {
-    setModelData(row || {});
-    setRolesModelType("Update");
-    setOpenRolesModal(true);
-  } 
-  // else if (tableType === "RecordDetailPage") {
-  //   setModelData(row || {});
-  //   setRecordDetailPageModelType("Update");
-  //   setOpenReportModal(true);
-  else {
-    setModelData(row || {});
-  }
-};
+    if (tableType === "Categories") {
+      setModelData(row || {});
+      setCategoryModelType("Update");
+      setOpenCategoryModal(true);
+    } else if (tableType === "Record") {
+      navigate(`/record/${row._id}`, { state: row });
+    } else if (tableType === "Appointment") {
+      setModelData(row || {});
+      setAppointmentModelType("Update");
+      setOpenAppointmentModal(true);
+    } else if (tableType === "PatientData") {
+      setModelData(row || {});
+      setPatientModelType("Update");
+      setOpenPatientModal(true);
+    } else if (tableType === "Report") {
+      setModelData(row || {});
+      setReportModelType("Update");
+      setOpenReportModal(true);
+    } else if (tableType === "User") {
+      setModelData(row || {});
+      setUserModelType("Update");
+      setOpenUserModal(true);
+    } else if (tableType === "Roles") {
+      setModelData(row || {});
+      setRolesModelType("Update");
+      setOpenRolesModal(true);
+    } else {
+      setModelData(row || {});
+    }
+  };
 
-
- 
-const handleSearch = (value) => {
-  setPage(1);
-  fetchData(value || searchQuery); // force using latest
-};
-
+  const handleSearch = () => {
+    setPage(1);
+    setSelected([]); // Clear selections on search
+    // fetchData will be automatically triggered by useEffect
+  };
 
   const handleDelete = async () => {
     if (selected.length === 0) {
@@ -315,19 +338,29 @@ const handleSearch = (value) => {
         response = await deleteRecord({ ids: selected });
       } else if (tableType === "Appointment") {
         response = await deleteAppointment({ ids: selected });
-      } 
-      else if (tableType === "Roles") {
+      } else if (tableType === "Roles") {
         response = await deleteAllRoles({ ids: selected });
-      }
-      else if (tableType === "User") {
+      } else if (tableType === "User") {
         response = await deleteAllUsers({ ids: selected });
-      }else {
+      } else {
         showAlert("error", "Delete not supported for this table");
         return;
       }
 
       if (response?.status === 200 || response?.success) {
         showAlert("success", response?.message || "Deleted successfully");
+        
+        // After delete, check if current page is still valid
+        const newTotal = totalRecords - selected.length;
+        const maxPage = Math.ceil(newTotal / rowsPerPage);
+        
+        // If current page doesn't exist anymore, go to last available page
+        if (page > maxPage && maxPage > 0) {
+          setPage(maxPage);
+        } else if (newTotal === 0) {
+          setPage(1);
+        }
+        
         fetchData();
         setSelected([]);
       } else {
@@ -358,12 +391,10 @@ const handleSearch = (value) => {
     } else if (tableType === "Report") {
       setReportModelType("Add");
       setOpenReportModal(true);
-    }
-    else if (tableType === "User") {
+    } else if (tableType === "User") {
       setUserModelType("Add");
       setOpenUserModal(true);
-    }
-    else if (tableType === "Roles") {
+    } else if (tableType === "Roles") {
       setRolesModelType("Add");
       setOpenRolesModal(true);
     }
@@ -454,25 +485,22 @@ const handleSearch = (value) => {
                 {tableType} List
               </Typography>
 
-              {tableType === "Categories" && (
+              {["Categories", "Record", "Appointment", "Report", "Roles", "User", "PatientData"].includes(tableType) && (
                 <TextField
                   size="small"
                   placeholder="Search..."
                   variant="outlined"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                   sx={{
                     minWidth: 200,
                     backgroundColor: "white",
                     borderRadius: 1,
                     "& .MuiOutlinedInput-root": {
                       "& fieldset": { borderColor: "var(--background-color)" },
-                      "&:hover fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
+                      "&:hover fieldset": { borderColor: "var(--background-color)" },
+                      "&.Mui-focused fieldset": { borderColor: "var(--background-color)" },
                     },
                   }}
                   InputProps={{
@@ -480,10 +508,7 @@ const handleSearch = (value) => {
                       <InputAdornment position="end">
                         <SearchIcon
                           onClick={handleSearch}
-                          sx={{
-                            cursor: "pointer",
-                            color: "var(--background-color)",
-                          }}
+                          sx={{ cursor: "pointer", color: "var(--background-color)" }}
                         />
                       </InputAdornment>
                     ),
@@ -491,225 +516,8 @@ const handleSearch = (value) => {
                 />
               )}
 
-{tableType === "Record" && (
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    minWidth: 200,
-                    backgroundColor: "white",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: "var(--background-color)" },
-                      "&:hover fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon
-                          // onClick={handleSearch}
-                          onClick={() => handleSearch(searchQuery)}
-                          sx={{
-                            cursor: "pointer",
-                            color: "var(--background-color)",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-{tableType === "Appointment" && (
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    minWidth: 200,
-                    backgroundColor: "white",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: "var(--background-color)" },
-                      "&:hover fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon
-                          onClick={handleSearch}
-                          sx={{
-                            cursor: "pointer",
-                            color: "var(--background-color)",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-             {tableType === "Report" && (
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    minWidth: 200,
-                    backgroundColor: "white",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: "var(--background-color)" },
-                      "&:hover fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon
-                          onClick={handleSearch}
-                          sx={{
-                            cursor: "pointer",
-                            color: "var(--background-color)",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-              {tableType === "Roles" && (
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    minWidth: 200,
-                    backgroundColor: "white",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: "var(--background-color)" },
-                      "&:hover fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon
-                          onClick={handleSearch}
-                          sx={{
-                            cursor: "pointer",
-                            color: "var(--background-color)",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-              {tableType === "User" && (
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    minWidth: 200,
-                    backgroundColor: "white",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: "var(--background-color)" },
-                      "&:hover fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon
-                          onClick={handleSearch}
-                          sx={{
-                            cursor: "pointer",
-                            color: "var(--background-color)",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-              {tableType === "PatientData" && (
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    minWidth: 200,
-                    backgroundColor: "white",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: "var(--background-color)" },
-                      "&:hover fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--background-color)",
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon
-                          onClick={handleSearch}
-                          sx={{
-                            cursor: "pointer",
-                            color: "var(--background-color)",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
               {selected.length > 0 ? (
-                <IconButton onClick={handleDeleteClick} sx={{ color:"rgb(161, 4, 4)" }}>
+                <IconButton onClick={handleDeleteClick} sx={{ color: "rgb(161, 4, 4)" }}>
                   <DeleteIcon />
                 </IconButton>
               ) : (
@@ -717,8 +525,8 @@ const handleSearch = (value) => {
                   <Button
                     sx={{
                       background: "linear-gradient(90deg, #8B0000, #B22222)",
-                        color: "#fff",
-                      borderRadius: "8px)",
+                      color: "#fff",
+                      borderRadius: "8px",
                       "&:hover": { background: "linear-gradient(90deg, #B22222, #8B0000)" },
                     }}
                     onClick={handleAddButton}
@@ -751,123 +559,121 @@ const handleSearch = (value) => {
                 </TableHead>
 
                 <TableBody>
-                  {data.map((row) => {
-                    const rowId = row._id || row.id;
-                    const isItemSelected = isSelected(rowId);
-                    return (
-                      <TableRow key={rowId} selected={isItemSelected}>
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            sx={{ color: "#8B0000" }}
-                            checked={isItemSelected}
-                            onChange={() => {
-                              setSelected((prev) =>
-                                isItemSelected ? prev.filter((id) => id !== rowId) : [...prev, rowId]
-                              );
-                            }}
-                          />
-                        </TableCell>
-
-                        {/* {attributes.map((attr) => (
-                          <TableCell key={attr.id} sx={{ color: "var(--black-color)" }}>
-                            {attr.id === "createdAt" || attr.id === "publishedDate"|| attr.id === "reportDate" || attr.id === "appointmentDate"  ? (
-                
-                              formatDate(row[attr.id],"display")
-                            ) : attr.id === "published" ? (
-                              <span
-                                style={{
-                                  color: row[attr.id] ? "var(--success-color)" : "var(--warning-color)",
-                                  background: row[attr.id] ? "var(--success-bgcolor)" : "var(--warning-bgcolor)",
-                                  padding: "5px",
-                                  borderRadius: "var(--border-radius-secondary)",
-                                }}
-                              >
-                                {row[attr.id] ? "Public" : "Private"}
-                              </span>
-                            ) : row[attr.id] === 0 ? (
-                              0
-                            ) : typeof getNestedValue(row, attr.id) === "string" ? (
-                              truncateText(getNestedValue(row, attr.id), 30)
-                            ) : (
-                              getNestedValue(row, attr.id)
-                            )}
+                  {/* 🆕 Loading State */}
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={attributes.length + 2} align="center" sx={{ py: 8 }}>
+                        <CircularProgress sx={{ color: "#8B0000" }} />
+                        <Typography variant="body1" sx={{ mt: 2, color: "var(--secondary-color)" }}>
+                          Loading data...
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : data.length === 0 ? (
+                    // 🆕 No Data Found State
+                    <TableRow>
+                      <TableCell colSpan={attributes.length + 2} align="center" sx={{ py: 8 }}>
+                        <Typography variant="h6" sx={{ color: "var(--secondary-color)", mb: 1 }}>
+                          {searchQuery ? "No results found" : "No data available"}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "var(--secondary-color)" }}>
+                          {searchQuery 
+                            ? `No ${tableType.toLowerCase()} found matching "${searchQuery}"`
+                            : `No ${tableType.toLowerCase()} available yet`
+                          }
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    // 🆕 Data Rows
+                    data.map((row) => {
+                      const rowId = row._id || row.id;
+                      const isItemSelected = isSelected(rowId);
+                      return (
+                        <TableRow key={rowId} selected={isItemSelected}>
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              sx={{ color: "#8B0000" }}
+                              checked={isItemSelected}
+                              onChange={() => {
+                                setSelected((prev) =>
+                                  isItemSelected ? prev.filter((id) => id !== rowId) : [...prev, rowId]
+                                );
+                              }}
+                            />
                           </TableCell>
-                        ))} 
- */}{attributes.map((attr) => (
-  <TableCell key={attr.id} sx={{ color: "var(--black-color)" }}>
-    {["createdAt", "publishedDate", "reportDate", "appointmentDate"].includes(attr.id) ? (
-      formatDate(row[attr.id], "display")
 
-    ) : attr.id === "published" ? (
-      <span
-        style={{
-          color: row[attr.id] ? "var(--success-color)" : "var(--warning-color)",
-          background: row[attr.id] ? "var(--success-bgcolor)" : "var(--warning-bgcolor)",
-          padding: "5px 10px",
-          borderRadius: "4px",
-          fontWeight: 500,
-        }}
-      >
-        {row[attr.id] ? "Public" : "Private"}
-      </span>
+                          {attributes.map((attr) => (
+                            <TableCell key={attr.id} sx={{ color: "var(--black-color)" }}>
+                              {["createdAt", "publishedDate", "reportDate", "appointmentDate"].includes(attr.id) ? (
+                                formatDate(row[attr.id], "display")
+                              ) : attr.id === "published" ? (
+                                <span
+                                  style={{
+                                    color: row[attr.id] ? "var(--success-color)" : "var(--warning-color)",
+                                    background: row[attr.id] ? "var(--success-bgcolor)" : "var(--warning-bgcolor)",
+                                    padding: "5px 10px",
+                                    borderRadius: "4px",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {row[attr.id] ? "Public" : "Private"}
+                                </span>
+                              ) : attr.id === "status" ? (
+                                <span
+                                  style={{
+                                    backgroundColor:
+                                      row[attr.id] === true || row[attr.id] === "Active"
+                                        ? "rgb(210, 248, 172)"
+                                        : row[attr.id] === false || row[attr.id] === "Inactive"
+                                        ? "rgb(255, 206, 202)"
+                                        : row[attr.id] === "Completed"
+                                        ? "rgb(210, 248, 172)"
+                                        : row[attr.id] === "Cancelled"
+                                        ? "rgb(255, 206, 202)"
+                                        : row[attr.id] === "Approved"
+                                        ? "rgb(218, 237, 253)"
+                                        : row[attr.id] === "Pending"
+                                        ? "rgb(250, 227, 187)"
+                                        : "#F5F5F5",
+                                    color: "inherit",
+                                    padding: "6px 12px",
+                                    borderRadius: "6px",
+                                    fontWeight: 500,
+                                    display: "inline-block",
+                                    textTransform: "capitalize",
+                                    textAlign: "center",
+                                    minWidth: "80px",
+                                  }}
+                                >
+                                  {row[attr.id] === true ? "Active" : row[attr.id] === false ? "Inactive" : row[attr.id]}
+                                </span>
+                              ) : row[attr.id] === 0 ? (
+                                0
+                              ) : typeof getNestedValue(row, attr.id) === "string" ? (
+                                truncateText(getNestedValue(row, attr.id), 30)
+                              ) : (
+                                getNestedValue(row, attr.id)
+                              )}
+                            </TableCell>
+                          ))}
 
-//   
-) : attr.id === "status" ? (
-  <span
-    style={{
-      backgroundColor:
-        row[attr.id] === true || row[attr.id] === "Active"
-          ? "rgb(210, 248, 172)" // 🟢 light parrot green
-          : row[attr.id] === false || row[attr.id] === "Inactive"
-          ? "rgb(255, 206, 202)" // 🔴 light red
-          : row[attr.id] === "Completed"
-          ? "rgb(210, 248, 172)"
-          : row[attr.id] === "Cancelled"
-          ? "rgb(255, 206, 202)"
-          : row[attr.id] === "Approved"
-          ? "rgb(218, 237, 253)"
-          : row[attr.id] === "Pending"
-          ? "rgb(250, 227, 187)"
-          : "#F5F5F5",
-      color: "inherit",
-      padding: "6px 12px",
-      borderRadius: "6px",
-      fontWeight: 500,
-      display: "inline-block",
-      textTransform: "capitalize",
-      textAlign: "center",
-      minWidth: "80px",
-    }}
-  >
-    {row[attr.id] === true ? "Active" : row[attr.id] === false ? "Inactive" : row[attr.id]}
-  </span>
-
-    ) : row[attr.id] === 0 ? (
-      0
-    ) : typeof getNestedValue(row, attr.id) === "string" ? (
-      truncateText(getNestedValue(row, attr.id), 30)
-    ) : (
-      getNestedValue(row, attr.id)
-    )}
-  </TableCell>
-))}
-
-
-                        <TableCell>
-                          <span
-                            onClick={() => handleViewClick(row)}
-                            style={{
-                              color: "#B22222",
-                              textDecoration: "underline",
-                              cursor: "pointer",
-                            }}
-                          >
-                            View
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          <TableCell>
+                            <span
+                              onClick={() => handleViewClick(row)}
+                              style={{
+                                color: "#B22222",
+                                textDecoration: "underline",
+                                cursor: "pointer",
+                              }}
+                            >
+                              View
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -877,9 +683,34 @@ const handleSearch = (value) => {
               component="div"
               count={totalRecords}
               rowsPerPage={rowsPerPage}
-              page={page - 1}
+              page={Math.min(page - 1, Math.max(0, Math.ceil(totalRecords / rowsPerPage) - 1))}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Rows per page:"
+              labelDisplayedRows={({ from, to, count }) => {
+                // Handle case when there's no data
+                if (count === 0) return '0-0 of 0';
+                // Normal display
+                const displayTo = Math.min(to, count);
+                return `${from}-${displayTo} of ${count}`;
+              }}
+              sx={{
+                '.MuiTablePagination-toolbar': {
+                  color: 'var(--secondary-color)',
+                },
+                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                  marginBottom: 0,
+                },
+                '.MuiTablePagination-select': {
+                  color: '#8B0000',
+                },
+                '.MuiTablePagination-actions button': {
+                  color: '#8B0000',
+                  '&:disabled': {
+                    color: 'rgba(0, 0, 0, 0.26)',
+                  },
+                },
+              }}
             />
           </Paper>
         </Box>
@@ -887,4 +718,5 @@ const handleSearch = (value) => {
     ),
   };
 }
+
 export default useTable;

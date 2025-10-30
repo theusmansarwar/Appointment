@@ -202,7 +202,7 @@ export default function AddUsers({
           >
             Cancel
           </Button>
-          <Button
+          {/* <Button
             onClick={handleSubmit}
             type="submit"
             variant="contained"
@@ -214,7 +214,19 @@ export default function AddUsers({
             }}
           >
             {id ? "Update" : "Create"}
-          </Button>
+          </Button> */}
+          <Button
+          onClick={handleSubmit}
+                        type="submit"
+                        variant="contained"
+                        sx={{
+                          background: "#B22222",
+                          color: "white",
+                          
+                        }}
+                      >
+                       Submit
+                      </Button>
         </Box>
       </Box>
     </Modal>

@@ -166,7 +166,7 @@ const handleLogin = async (e) => {
     if (result.status === 200 && result?.token) {
       showAlert("success", result?.message || "Login successful!");
       localStorage.setItem("token", result.token);
-      localStorage.setItem("user", JSON.stringify(result.user || {}));
+      localStorage.setItem("user", JSON.stringify(result.users || {}));
       onLoginSuccess();
     } else {
       showAlert("error", result?.message || "Login failed.");

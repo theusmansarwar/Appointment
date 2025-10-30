@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Routes,
   Route,
@@ -7,66 +6,117 @@ import {
   useNavigate,
   Navigate,
 } from "react-router-dom";
-import "./App.css";
-import zemaltlogo from "./Assets/doctor.jpg";
-import personimg from "./Assets/person.png";
-
-// icons
 import { MdOutlineDoubleArrow, MdDashboard } from "react-icons/md";
-import { FaCalendarCheck, FaUserInjured, FaNotesMedical } from "react-icons/fa";
+import {
+  FaCalendarCheck,
+  FaUserInjured,
+  FaNotesMedical,
+  FaUsers,
+} from "react-icons/fa";
 import { HiDocumentReport } from "react-icons/hi";
 import { IoLogOut } from "react-icons/io5";
-import User from "./Pages/User/User"
-import ProtectedRoute from "./Components/ProtectedRoute";
-import Record from "./Pages/Practice/Record";
-import PatientData from "./Pages/PatientData/PatientData";
+import { HiUserGroup } from "react-icons/hi";
+
+import "./App.css";
+import zemaltlogo from "./Assets/doctor.jpg";
+
+// Pages
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import AppointmentManagement from "./Pages/Appointment/AppointmentManagement";
-import Report from "./Pages/Report/Report";
+import PatientData from "./Pages/PatientData/PatientData";
+import Record from "./Pages/Practice/Record";
 import RecordDetailPage from "./Components/Models/RecordDetailPage";
-import Roles from "./Pages/Roles/Roles"
+import Report from "./Pages/Report/Report";
+import User from "./Pages/User/User";
+import Roles from "./Pages/Roles/Roles";
+
 const App = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [activeItem, setActiveItem] = useState(null);
   const [isOpen, setIsOpen] = useState(true);
+  const [userModules, setUserModules] = useState([]);
+  const [isInitializing, setIsInitializing] = useState(true); // 🆕 Loading state
 
-  const role = localStorage.getItem("role"); // "admin" or "doctor"
+  // ✅ All available sidebar items
+  const allItems = [
+    { id: 1, name: "Dashboard", route: "/dashboard", icon: <MdDashboard /> },
+    { id: 2, name: "Appointment", route: "/appointment", icon: <FaCalendarCheck /> },
+    { id: 3, name: "PatientData", route: "/patientdata", icon: <FaUserInjured /> },
+    { id: 4, name: "Records", route: "/records", icon: <FaNotesMedical /> },
+    { id: 5, name: "Reports", route: "/reports", icon: <HiDocumentReport /> },
+    { id: 6, name: "User", route: "/user", icon: <FaUsers /> },
+    { id: 7, name: "Roles", route: "/roles", icon: <HiUserGroup /> },
+  ];
 
-  // Sidebar items
-  const items = useMemo(() => {
-    return [
-      { id: 1, name: "Dashboard", route: "/dashboard", icon: <MdDashboard /> },
-      {
-        id: 2,
-        name: "Appointments",
-        route: "/appointmentmanagement",
-        icon: <FaCalendarCheck />,
-      },
-      {
-        id: 3,
-        name: "Patients Data",
-        route: "/patientdata",
-        icon: <FaUserInjured />,
-      },
-      { id: 4, name: "Records", route: "/record", icon: <FaNotesMedical /> },
-      { id: 5, name: "Reports", route: "/report", icon: <HiDocumentReport /> },
-       { id: 6, name: "User", route: "/user", icon: <HiDocumentReport /> },
-       { id: 7, name: "Roles", route: "/roles", icon: <HiDocumentReport /> },
-    ];
-  }, []);
+  // ✅ Filter only allowed modules for sidebar
+  const filteredItems = allItems.filter((item) =>
+    userModules.includes(item.name)
+  );
 
-  // Set active item based on current URL
+  //✅ Load user's allowed modules and handle initial navigation
   useEffect(() => {
-    const currentItem = items.find((item) => item.route === location.pathname);
-    setActiveItem(currentItem?.id || null);
-  }, [location, items]);
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser && storedUser.role?.Modules) {
+      setUserModules(storedUser.role.Modules);
+      
+      // 🆕 Handle initial navigation BEFORE setting isInitializing to false
+      const currentPath = location.pathname;
+      
+      // Only redirect if on root or dashboard
+      if (currentPath === "/" || currentPath === "/dashboard") {
+        // Check all possible table types for saved paths
+        const tableTypes = ["User", "Roles", "PatientData", "Record", "Appointment", "Report", "Categories"];
+        
+        let restored = false;
+        for (const tableType of tableTypes) {
+          const savedPath = localStorage.getItem(`${tableType}-lastPath`);
+          if (savedPath && savedPath !== "/" && savedPath !== "/dashboard") {
+            // Verify user has access to this module
+            const allowedRoutes = allItems
+              .filter(item => storedUser.role.Modules.includes(item.name))
+              .map(item => item.route);
+            
+            const hasAccess = allowedRoutes.some(route => savedPath.includes(route));
+            if (hasAccess) {
+              navigate(savedPath, { replace: true });
+              restored = true;
+              break;
+            }
+          }
+        }
+        
+        // If no saved path and user can't access dashboard, go to first allowed
+        if (!restored && !storedUser.role.Modules.includes("Dashboard")) {
+          const firstAllowed = allItems.find(item => 
+            storedUser.role.Modules.includes(item.name)
+          );
+          if (firstAllowed) {
+            navigate(firstAllowed.route, { replace: true });
+          }
+        }
+      }
+      
+      setIsInitializing(false); // 🆕 Done loading
+    } else {
+      navigate("/login");
+      setIsInitializing(false);
+    }
+  }, []); // Only run once on mount
+
+  // ✅ Update active sidebar item when route changes
+  useEffect(() => {
+    if (!isInitializing) {
+      const currentItem = filteredItems.find(
+        (item) => item.route === location.pathname
+      );
+      setActiveItem(currentItem?.id || null);
+    }
+  }, [location.pathname, filteredItems, isInitializing]);
 
   // Sidebar toggle
-  const toggleMenu = () => {
-    setIsOpen((prev) => !prev);
-  };
+  const toggleMenu = () => setIsOpen((prev) => !prev);
 
   // Handle click navigation
   const handleItemClick = (item) => {
@@ -74,21 +124,43 @@ const App = ({ onLogout }) => {
     navigate(item.route);
   };
 
+  // ✅ Route protection
+  const ProtectedElement = ({ element, moduleName }) => {
+    if (!userModules.includes(moduleName)) {
+      const firstAllowed = filteredItems[0]?.route || "/login";
+      return <Navigate to={firstAllowed} replace />;
+    }
+    return element;
+  };
+
+  // 🆕 Show loading or blank screen while initializing
+  if (isInitializing) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#f5f5f5'
+      }}>
+        {/* Optional: Add a spinner here */}
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       {/* Sidebar */}
       <div className={`app-side-bar ${isOpen ? "open" : "closed"}`}>
-        {/* Toggle icon */}
         <div className="opencloseicon" onClick={toggleMenu}>
           <MdOutlineDoubleArrow className={isOpen ? "rotated" : ""} />
         </div>
 
-        {/* Logo */}
         <img src={zemaltlogo} className="logo" alt="Clinic Logo" />
 
-        {/* Menu Items */}
         <ul>
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <li
               key={item.id}
               className={activeItem === item.id ? "selected-item" : "unselected"}
@@ -108,19 +180,43 @@ const App = ({ onLogout }) => {
       {/* Right Content */}
       <div className="app-right">
         <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
           <Route
-            path="/appointmentmanagement"
-            element={<AppointmentManagement />}
+            path="/dashboard"
+            element={<ProtectedElement element={<Dashboard />} moduleName="Dashboard" />}
           />
-          <Route path="/record" element={<Record />} />
-          <Route path="/record/:recordId" element={<RecordDetailPage />} />
-          <Route path="/patientdata" element={<PatientData />} />
-          <Route path="/report" element={<Report />} />
-          <Route path="/user" element={<User />} />
-           <Route path="/roles" element={<Roles />} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
-           
+          <Route
+            path="/appointment"
+            element={<ProtectedElement element={<AppointmentManagement />} moduleName="Appointment" />}
+          />
+          <Route
+            path="/patientdata"
+            element={<ProtectedElement element={<PatientData />} moduleName="PatientData" />}
+          />
+          <Route
+            path="/records"
+            element={<ProtectedElement element={<Record />} moduleName="Records" />}
+          />
+          <Route
+            path="/record/:recordId"
+            element={<ProtectedElement element={<RecordDetailPage />} moduleName="Records" />}
+          />
+          <Route
+            path="/reports"
+            element={<ProtectedElement element={<Report />} moduleName="Reports" />}
+          />
+          <Route
+            path="/user"
+            element={<ProtectedElement element={<User />} moduleName="User" />}
+          />
+          <Route
+            path="/roles"
+            element={<ProtectedElement element={<Roles />} moduleName="Roles" />}
+          />
+          {/* Default Redirect */}
+          <Route
+            path="*"
+            element={<Navigate to={filteredItems[0]?.route || "/login"} replace />}
+          />
         </Routes>
       </div>
     </div>
@@ -128,180 +224,3 @@ const App = ({ onLogout }) => {
 };
 
 export default App;
-// import React, { useState, useEffect, useMemo } from "react";
-// import {
-//   Routes,
-//   Route,
-//   useLocation,
-//   useNavigate,
-//   Navigate,
-// } from "react-router-dom";
-// import {
-//   MdOutlineDoubleArrow,
-//   MdDashboard,
-// } from "react-icons/md";
-// import {
-//   FaCalendarCheck,
-//   FaUserInjured,
-//   FaNotesMedical,
-// } from "react-icons/fa";
-// import { HiDocumentReport } from "react-icons/hi";
-// import { IoLogOut } from "react-icons/io5";
-// import "./App.css";
-
-// import zemaltlogo from "./Assets/doctor.jpg";
-
-// // Pages
-// import Dashboard from "./Pages/Dashboard/Dashboard";
-// import AppointmentManagement from "./Pages/Appointment/AppointmentManagement";
-// import PatientData from "./Pages/PatientData/PatientData";
-// import Record from "./Pages/Practice/Record";
-// import RecordDetailPage from "./Components/Models/RecordDetailPage";
-// import Report from "./Pages/Report/Report";
-// import User from "./Pages/User/User";
-// import Roles from "./Pages/Roles/Roles";
-
-// const App = ({ onLogout }) => {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-
-//   const [activeItem, setActiveItem] = useState(null);
-//   const [isOpen, setIsOpen] = useState(true);
-//   const [userModules, setUserModules] = useState([]);
-
-//   // ✅ All possible sidebar items
-//   const allItems = [
-//     { id: 1, name: "Dashboard", route: "/dashboard", icon: <MdDashboard /> },
-//     { id: 2, name: "Appointment", route: "/appointmentmanagement", icon: <FaCalendarCheck /> },
-//     { id: 3, name: "PatientData", route: "/patientdata", icon: <FaUserInjured /> },
-//     { id: 4, name: "Records", route: "/record", icon: <FaNotesMedical /> },
-//     { id: 5, name: "Reports", route: "/report", icon: <HiDocumentReport /> },
-//     { id: 6, name: "User", route: "/user", icon: <HiDocumentReport /> },
-//     { id: 7, name: "Roles", route: "/roles", icon: <HiDocumentReport /> },
-//   ];
-
-//   // ✅ Load user role modules from localStorage
-//   useEffect(() => {
-//     const storedUser = JSON.parse(localStorage.getItem("user"));
-//     if (storedUser && storedUser.role?.Modules) {
-//       setUserModules(storedUser.role.Modules);
-//     } else {
-//       navigate("/login");
-//     }
-//   }, [navigate]);
-
-//   // ✅ Filter allowed sidebar items based on user role
-//   const filteredItems = allItems.filter((item) =>
-//     userModules.includes(item.name)
-//   );
-
-//   // ✅ Auto redirect if dashboard not available
-//   useEffect(() => {
-//     if (filteredItems.length > 0) {
-//       const onDashboard =
-//         location.pathname === "/" || location.pathname === "/dashboard";
-//       if (onDashboard && !userModules.includes("Dashboard")) {
-//         navigate(filteredItems[0].route, { replace: true });
-//       }
-//     }
-//   }, [filteredItems, userModules, location.pathname, navigate]);
-
-//   // ✅ Update active item on route change
-//   useEffect(() => {
-//     const currentItem = filteredItems.find(
-//       (item) => item.route === location.pathname
-//     );
-//     setActiveItem(currentItem?.id || null);
-//   }, [location.pathname, filteredItems]);
-
-//   const toggleMenu = () => setIsOpen((prev) => !prev);
-
-//   const handleItemClick = (item) => {
-//     setActiveItem(item.id);
-//     navigate(item.route);
-//   };
-
-//   // ✅ Inline Protected Route
-//   const ProtectedElement = ({ element, moduleName }) => {
-//     if (!userModules.includes(moduleName)) {
-//       const firstAllowed = filteredItems[0]?.route || "/login";
-//       return <Navigate to={firstAllowed} replace />;
-//     }
-//     return element;
-//   };
-
-//   return (
-//     <div className="App">
-//       {/* Sidebar */}
-//       <div className={`app-side-bar ${isOpen ? "open" : "closed"}`}>
-//         <div className="opencloseicon" onClick={toggleMenu}>
-//           <MdOutlineDoubleArrow className={isOpen ? "rotated" : ""} />
-//         </div>
-
-//         <img src={zemaltlogo} className="logo" alt="Clinic Logo" />
-
-//         <ul>
-//           {filteredItems.map((item) => (
-//             <li
-//               key={item.id}
-//               className={activeItem === item.id ? "selected-item" : "unselected"}
-//               onClick={() => handleItemClick(item)}
-//             >
-//               {item.icon}
-//               {isOpen && <span>{item.name}</span>}
-//             </li>
-//           ))}
-//           <li className="unselected" onClick={onLogout}>
-//             <IoLogOut />
-//             {isOpen && <span>Logout</span>}
-//           </li>
-//         </ul>
-//       </div>
-
-//       {/* Right Side Routes */}
-//       <div className="app-right">
-//         <Routes>
-//           <Route
-//             path="/dashboard"
-//             element={<ProtectedElement element={<Dashboard />} moduleName="Dashboard" />}
-//           />
-//           <Route
-//             path="/appointmentmanagement"
-//             element={<ProtectedElement element={<AppointmentManagement />} moduleName="Appointment" />}
-//           />
-//           <Route
-//             path="/patientdata"
-//             element={<ProtectedElement element={<PatientData />} moduleName="PatientData" />}
-//           />
-//           <Route
-//             path="/record"
-//             element={<ProtectedElement element={<Record />} moduleName="Records" />}
-//           />
-//           <Route
-//             path="/record/:recordId"
-//             element={<ProtectedElement element={<RecordDetailPage />} moduleName="Records" />}
-//           />
-//           <Route
-//             path="/report"
-//             element={<ProtectedElement element={<Report />} moduleName="Reports" />}
-//           />
-//           <Route
-//             path="/user"
-//             element={<ProtectedElement element={<User />} moduleName="User" />}
-//           />
-//           <Route
-//             path="/roles"
-//             element={<ProtectedElement element={<Roles />} moduleName="Roles" />}
-//           />
-//           {/* Default redirect */}
-//           <Route
-//             path="*"
-//             element={<Navigate to={filteredItems[0]?.route || "/login"} replace />}
-//           />
-//         </Routes>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default App;
