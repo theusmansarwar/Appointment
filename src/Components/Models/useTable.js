@@ -488,7 +488,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
               {["Categories", "Record", "Appointment", "Report", "Roles", "User", "PatientData"].includes(tableType) && (
                 <TextField
                   size="small"
-                  placeholder="Search..."
+                  placeholder="Name..."
                   variant="outlined"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
