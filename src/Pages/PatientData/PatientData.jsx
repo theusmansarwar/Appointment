@@ -19,7 +19,7 @@ const PatientData = () => {
   const { tableUI } = useTable({
     attributes,
    
-    tableType: "PatientData",
+    tableType: "Patient Data",
   });
 
   return <>{tableUI}</>;

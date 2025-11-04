@@ -53,7 +53,8 @@ import { useAlert } from "../Alert/AlertContext";
 import DeleteModal from "./confirmDeleteModel";
 import AddRoles from "./AddRoles";
 import AddUser from "./AddUser";
-
+import { formatetime } from "../../Utils/Formatetime";
+import { brown } from "@mui/material/colors";
 export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 10 }) {
   const { showAlert } = useAlert();
   const navigate = useNavigate();
@@ -143,7 +144,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
       }
 
       // PatientData
-      if (tableType === "PatientData") {
+      if (tableType === "Patient Data") {
         response = await fetchallPatientslist(page, rowsPerPage, searchQuery);
 
         if (response?.status === 400) {
@@ -293,7 +294,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
       setModelData(row || {});
       setAppointmentModelType("Update");
       setOpenAppointmentModal(true);
-    } else if (tableType === "PatientData") {
+    } else if (tableType === "Patient Data") {
       setModelData(row || {});
       setPatientModelType("Update");
       setOpenPatientModal(true);
@@ -330,7 +331,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
       let response;
       if (tableType === "Categories") {
         response = await deleteAllCategories({ ids: selected });
-      } else if (tableType === "PatientData") {
+      } else if (tableType === "Patient Data") {
         response = await deletePatient({ ids: selected });
       } else if (tableType === "Report") {
         response = await deleteReport({ ids: selected });
@@ -385,7 +386,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
     } else if (tableType === "Appointment") {
       setAppointmentModelType("Add");
       setOpenAppointmentModal(true);
-    } else if (tableType === "PatientData") {
+    } else if (tableType === "Patient Data") {
       setPatientModelType("Add");
       setOpenPatientModal(true);
     } else if (tableType === "Report") {
@@ -485,7 +486,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
                 {tableType} List
               </Typography>
 
-              {["Categories", "Record", "Appointment", "Report", "Roles", "User", "PatientData"].includes(tableType) && (
+              {["Categories", "Record", "Appointment", "Report", "Roles", "User", "Patient Data"].includes(tableType) && (
                 <TextField
                   size="small"
                   placeholder="Name..."
@@ -539,7 +540,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
 
             <TableContainer>
               <Table stickyHeader>
-                <TableHead>
+                {/* <TableHead>
                   <TableRow>
                     <TableCell padding="checkbox">
                       <Checkbox
@@ -556,7 +557,41 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
                     ))}
                     <TableCell sx={{ color: "#B0000" }}>Action</TableCell>
                   </TableRow>
-                </TableHead>
+                </TableHead> */}
+<TableHead>
+  <TableRow
+    sx={{
+      backgroundColor: "#B22222", // red background
+    }}
+  >
+    <TableCell padding="checkbox"
+    sx={{ backgroundColor: "#B22222" }} >
+      <Checkbox
+        sx={{ color: "white" }}
+        
+        indeterminate={selected.length > 0 && selected.length < data.length}
+        checked={data.length > 0 && selected.length === data.length}
+        onChange={handleSelectAllClick}
+      />
+    </TableCell>
+
+    {attributes.map((attr) => (
+      <TableCell
+        key={attr.id}
+        sx={{
+          color: "white",        // white text
+          fontWeight: "bold",
+          fontSize: "0.95rem",
+          background: "#B22222"
+        }}
+      >
+        {attr.label}
+      </TableCell>
+    ))}
+
+    <TableCell sx={{ color: "white", fontWeight: "bold",background: "#B22222" }}>Action</TableCell>
+  </TableRow>
+</TableHead>
 
                 <TableBody>
                   {/* 🆕 Loading State */}
@@ -605,10 +640,11 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
 
                           {attributes.map((attr) => (
                             <TableCell key={attr.id} sx={{ color: "var(--black-color)" }}>
-                              {["createdAt", "publishedDate", "reportDate", "appointmentDate"].includes(attr.id) ? (
+                              {/* {["createdAt", "publishedDate", "reportDate", "appointmentDate"].includes(attr.id) ? (
                                 formatDate(row[attr.id], "display")
-                              ) : attr.id === "published" ? (
-                                <span
+                              ) : attr.id === "published" ? ( */}
+                              
+                                {/* <span
                                   style={{
                                     color: row[attr.id] ? "var(--success-color)" : "var(--warning-color)",
                                     background: row[attr.id] ? "var(--success-bgcolor)" : "var(--warning-bgcolor)",
@@ -618,7 +654,24 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
                                   }}
                                 >
                                   {row[attr.id] ? "Public" : "Private"}
-                                </span>
+                                </span> */}
+                                {["createdAt", "publishedDate", "reportDate", "appointmentDate"].includes(attr.id) ? (
+  formatDate(row[attr.id], "display")
+) : attr.id === "appointmentTime" ? (
+  formatetime(row[attr.id])
+) : attr.id === "published" ? (
+  <span
+    style={{
+      color: row[attr.id] ? "var(--success-color)" : "var(--warning-color)",
+      background: row[attr.id] ? "var(--success-bgcolor)" : "var(--warning-bgcolor)",
+      padding: "5px 10px",
+      borderRadius: "4px",
+      fontWeight: 500,
+    }}
+  >
+    {row[attr.id] ? "Public" : "Private"}
+  </span>
+
                               ) : attr.id === "status" ? (
                                 <span
                                   style={{
