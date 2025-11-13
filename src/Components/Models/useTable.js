@@ -655,7 +655,7 @@ export function useTable({ attributes, pagedata = [], tableType, limitPerPage = 
                                 >
                                   {row[attr.id] ? "Public" : "Private"}
                                 </span> */}
-                                {["createdAt", "publishedDate", "reportDate", "appointmentDate"].includes(attr.id) ? (
+                                {["createdAt", "publishedDate", "reportDate", "appointmentDate", "visitDate"].includes(attr.id) ? (
   formatDate(row[attr.id], "display")
 ) : attr.id === "appointmentTime" ? (
   formatetime(row[attr.id])

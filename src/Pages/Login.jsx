@@ -238,10 +238,11 @@ const Login = ({ onLoginSuccess }) => {
             }}
           />
 
-          <Typography variant="h5" gutterBottom>
-            Admin Login
+         
+              <Typography variant="h5" gutterBottom fontWeight="bold">
+          Doctor's Appointment Management System
+         
           </Typography>
-
           <TextField
             fullWidth
             label="Username"

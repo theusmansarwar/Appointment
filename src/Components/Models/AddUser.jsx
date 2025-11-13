@@ -105,7 +105,7 @@ export default function AddUsers({
           fieldErrors[f.name] = f.message;
         });
         setErrors(fieldErrors);
-        onResponse({ messageType: "error", message: "Validation failed" });
+        //  onResponse({ messageType: "error", message: "Validation failed" });
       } else {
         onResponse({
           messageType: "error",

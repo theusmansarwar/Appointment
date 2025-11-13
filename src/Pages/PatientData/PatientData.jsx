@@ -12,7 +12,7 @@ const PatientData = () => {
     { id: "phone", label: "Phone" },
     { id: "address", label: "Address" },
     { id: "appointmentDate", label: " Appointment Date" },
-    { id: "appointmentTime", label: " Apoointment Time" },
+    { id: "appointmentTime", label: " Appointment Time" },
     { id: "reason", label: "Reason" },
   ];
 
